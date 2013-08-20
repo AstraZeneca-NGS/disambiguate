@@ -70,6 +70,8 @@ def main(argv):
 	
 	Code by Miika Ahdesmaki July-August 2013.
 	"""
+	numhum = nummou = numamb = 0
+	
 	humanfile = ''
 	mousefile = ''
 	samplenameprefix = ''
@@ -139,6 +141,7 @@ def main(argv):
 	myHumanAmbiguousFile = pysam.Samfile(path.join(outputdir, humanprefix+".ambiguousHuman.bam"), "wb", template=myHumanFile)
 	myMouseUniqueFile = pysam.Samfile(path.join(outputdir, mouseprefix+".mouse.bam"), "wb", template=myMouseFile)
 	myMouseAmbiguousFile = pysam.Samfile(path.join(outputdir, mouseprefix+".ambiguousMouse.bam"), "wb", template=myMouseFile)
+	summaryFile = open(path.join(outputdir,'summary2.txt'),'w')
 	
 	#initialise
 	try: 
@@ -152,8 +155,13 @@ def main(argv):
 	while not EOFmouse&EOFhuman:
 		while not (nat_cmp(nexthumread.qname,nextmouread.qname) == 0):
 			# check order between current human and mouse qname (find a point where they're identical, i.e. in sync)
+			prevHumID = None
+			prevMouID = None
 			while nat_cmp(nexthumread.qname,nextmouread.qname) > 0 and not EOFmouse: # mouse is "behind" human, output to mouse disambiguous
 				myMouseUniqueFile.write(nextmouread)
+				if nextmouread.qname is not prevMouID:
+					nummou+=1 # increment mouse counter for unique only
+				prevMouID = nextmouread.qname
 				try:
 					nextmouread=myMouseFile.next()
 				except StopIteration:
@@ -161,6 +169,9 @@ def main(argv):
 					EOFmouse=True
 			while nat_cmp(nexthumread.qname,nextmouread.qname) < 0 and not EOFhuman: # human is "behind" mouse, output to human disambiguous
 				myHumanUniqueFile.write(nexthumread)
+				if nexthumread.qname is not prevHumID:
+					numhum+=1 # increment human counter for unique only
+				prevHumID = nexthumread.qname
 				try:
 					nexthumread=myHumanFile.next()
 				except StopIteration:
@@ -187,20 +198,27 @@ def main(argv):
 			myAmbiguousness = disambiguate(humlist, moulist)
 			#print myAmbiguousness
 			if myAmbiguousness < 0: # mouse
+				nummou+=1 # increment mouse counter
 				for myRead in moulist:
 					myMouseUniqueFile.write(myRead)
 			elif myAmbiguousness > 0: # human
+				numhum+=1 # increment human counter
 				for myRead in humlist:
 					myHumanUniqueFile.write(myRead)
 			else: # ambiguous
+				numamb+=1 # increment ambiguous counter
 				for myRead in moulist:
 					myMouseAmbiguousFile.write(myRead)
 				for myRead in humlist:
 					myHumanAmbiguousFile.write(myRead)
 		if EOFhuman:
 			#flush the rest of the mouse reads
+			prevMouID = None
 			while not EOFmouse:
 				myMouseUniqueFile.write(nextmouread)
+				if nextmouread.qname is not prevMouID:
+					nummou+=1 # increment mouse counter for unique only
+				prevMouID = nextmouread.qname
 				try:
 					nextmouread=myMouseFile.next()
 				except StopIteration:
@@ -208,8 +226,12 @@ def main(argv):
 					EOFmouse=True
 		if EOFmouse:
 			#flush the rest of the human reads
+			prevHumID = None
 			while not EOFhuman:
 				myHumanUniqueFile.write(nexthumread)
+				if nexthumread.qname is not prevHumID:
+					numhum+=1 # increment human counter for unique only
+				prevHumID = nexthumread.qname
 				try:
 					nexthumread=myHumanFile.next()
 				except StopIteration:
@@ -217,7 +239,10 @@ def main(argv):
 					EOFhuman=True
 
 		#end while not
-	
+
+	summaryFile.write("sample\tunique human pairs\tunique mouse pairs\tambiguous pairs\n")
+	summaryFile.write(humanprefix+"\t"+str(numhum)+"\t"+str(nummou)+"\t"+str(numamb)+"\n")
+	summaryFile.close()
 	myHumanFile.close()
 	myMouseFile.close()
 	myHumanUniqueFile.close()
