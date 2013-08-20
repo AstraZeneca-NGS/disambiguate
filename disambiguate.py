@@ -55,26 +55,42 @@ def disambiguate(humanlist, mouselist):
 
 #code
 def main(argv):
+	"""
+	This is the main function to call for disambiguating between a human and mouse BAM files that have alignments from the same source of fastq files.
+	It is part of the explant RNA/DNA-Seq workflow where an informatics approach is used to distinguish between human and mouse RNA/DNA reads.
+	
+	For reads that have aligned to both organisms, the functionality is based on comparing quality scores from either Tophat of BWA (under development).
+	For Tophat, the sum of the flags XO, NM and NH is evaluated and the lowest sum wins the paired end reads. For equal scores, the reads are assigned as ambiguous.
+	
+	Usage: disambiguate.py -h <human.bam> -m <mouse.bam> -o <outputdir> (-d -i <intermediatedir> -s <samplenameprefix>)
+	If <samplenameprefix> is provided it will be used in the output filenames, otherwise the output filenames will be named after <mouse.bam> and <human.bam>
+	Note well that Tophat2 always renames its output as accepted_hits.bam regardless of the fastq filenames and therefore it is a very good idea to provide a <samplenameprefix>
+	
+	For usage help call disambiguate(.main) with flag --help
+	
+	Code by Miika Ahdesmaki July-August 2013.
+	"""
 	humanfile = ''
 	mousefile = ''
+	samplenameprefix = ''
 	outputdir = 'disambres/'
 	intermdir = 'intermfiles/'
 	disablesort = False
 	starttime = time.clock()
 	# parse input arguments
 	try:
-		opts, args = getopt.getopt(argv,"h:m:o:di:",["help"])
+		opts, args = getopt.getopt(argv,"h:m:o:di:s:",["help"])
 		if len(opts) < 2:
-			print 'Usage: disambiguate.py -h <human.bam> -m <mouse.bam> -o <outputdir> (-d -i <intermediatedir>)'
+			print 'Usage: disambiguate.py -h <human.bam> -m <mouse.bam> -o <outputdir> (-d -i <intermediatedir> -s <samplenameprefix>)'
 			print 'This script orders the BAM files according to read name unless disabled using -d'
 			sys.exit()
 	except getopt.GetoptError:
-		print 'Usage: disambiguate.py -h <human.bam> -m <mouse.bam> -o <outputdir> (-d -i <intermediatedir>)'
+		print 'Usage: disambiguate.py -h <human.bam> -m <mouse.bam> -o <outputdir> (-d -i <intermediatedir> -s <samplenameprefix>)'
 		print 'This script orders the BAM files according to read name unless disabled using -d'
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '--help':
-			print 'disambiguate.py -h <human.bam> -m <mouse.bam> -o <outputdir> (-d -i <intermediatedir>)'
+			print 'disambiguate.py -h <human.bam> -m <mouse.bam> -o <outputdir> (-d -i <intermediatedir> -s <samplenameprefix>)'
 			print 'This script orders the BAM files according to read name unless disabled using -d'
 			sys.exit(2)
 		elif opt in ("-h"):
@@ -87,23 +103,31 @@ def main(argv):
 			disablesort = True
 		elif opt in ("-i"):
 			intermdir = arg
+		elif opt in ("-i"):
+			samplenameprefix = arg
 	if len(humanfile) < 1 or len(mousefile) < 1:
 		print "Two input BAM files must be specified using options -h and -m"
 		sys.exit(2)
+	if len(samplenameprefix) < 1
+		humanprefix = path.basename(humanfile.replace(".bam",""))
+		mouseprefix = path.basename(mousefile.replace(".bam",""))
+	else:
+		humanprefix = samplenameprefix
+		mouseprefix = samplenameprefix
+	samplenameprefix = None
 	
-   # the fields are: human_1, human_2, mouse_1, mouse_2, human (bool), mouse (bool), ambiguous (bool)
 	if disablesort:
 		humanfilesorted = humanfile # assumed to be sorted externally...
 		mousefilesorted = mousefile # assumed to be sorted externally...
 	else:
 		if not path.isdir(intermdir):
 			makedirs(intermdir)
-		humanfilesorted = path.join(intermdir,path.basename(humanfile.replace(".bam",".namesorted.bam")))
-		mousefilesorted = path.join(intermdir,path.basename(mousefile.replace(".bam",".namesorted.bam")))
+		humanfilesorted = path.join(intermdir,humanprefix+".human.namesorted.bam")
+		mousefilesorted = path.join(intermdir,mouseprefix+".mouse.namesorted.bam")
 		print "Name sorting human and mouse BAM files using samtools"
 		pysam.sort("-n","-m","2000000000",humanfile,humanfilesorted.replace(".bam",""))
 		pysam.sort("-n","-m","2000000000",mousefile,mousefilesorted.replace(".bam",""))
-		print "Intermediate sorted BAM files stored under " + intermdir
+		print "Intermediate name sorted BAM files stored under " + intermdir
 	
 	print "Processing human and mouse files for ambiguous reads"
    # read in human reads and form a dictionary
@@ -111,10 +135,10 @@ def main(argv):
 	myMouseFile = pysam.Samfile(mousefilesorted, "rb" )
 	if not path.isdir(outputdir):
 		makedirs(outputdir)
-	myHumanUniqueFile = pysam.Samfile(path.join(outputdir,path.basename(humanfile.replace(".bam",".disambiguousHuman.bam"))), "wb", template=myHumanFile) 
-	myHumanAmbiguousFile = pysam.Samfile(path.join(outputdir,path.basename(humanfile.replace(".bam",".ambiguousHuman.bam"))), "wb", template=myHumanFile)
-	myMouseUniqueFile = pysam.Samfile(path.join(outputdir,path.basename(mousefile.replace(".bam",".disambiguousMouse.bam"))), "wb", template=myMouseFile)
-	myMouseAmbiguousFile = pysam.Samfile(path.join(outputdir,path.basename(mousefile.replace(".bam",".ambiguousMouse.bam"))), "wb", template=myMouseFile)
+	myHumanUniqueFile = pysam.Samfile(path.join(outputdir, humanprefix+".human.bam"), "wb", template=myHumanFile) 
+	myHumanAmbiguousFile = pysam.Samfile(path.join(outputdir, humanprefix+".ambiguousHuman.bam"), "wb", template=myHumanFile)
+	myMouseUniqueFile = pysam.Samfile(path.join(outputdir, mouseprefix+".mouse.bam"), "wb", template=myMouseFile)
+	myMouseAmbiguousFile = pysam.Samfile(path.join(outputdir, mouseprefix+".ambiguousMouse.bam"), "wb", template=myMouseFile)
 	
 	#initialise
 	try: 
