@@ -55,8 +55,41 @@ def disambiguate(humanlist, mouselist, disambalgo):
 			# assign to mouse
 			return -1
 	elif disambalgo == 'bwa':
-		print("Not implemented yet")
-		sys.exit(2)
+		dv = -2^13 # default value, low
+		bwatags = ['AS','NM','XS'] # in order of importance (compared sequentially, not as a sum as for tophat)
+		bwatagsigns = [1,-1,1] # for AS and XS higher is better. for NM lower is better, thus multiply by -1
+		AS = list()
+		for x in range(0, len(bwatagsigns)):
+			AS.append(array('i',(dv for i in range(0,4)))) # alignment score array, with [human_1_Score, human_2_Score, mouse_1_Score, mouse_2_Score]
+		#		
+		for read in humanlist:
+			if 0x4&read.flag: # flag 0x4 means unaligned
+				continue
+			# directionality (_1 or _2)
+			d12 = 0 if 0x40&read.flag else 1
+			for x in range(0, len(bwatagsigns)):
+				QScore = bwatagsigns[x]*read.opt(bwatags[x])
+				if AS[x][d12]<QScore:
+					AS[x][d12]=QScore # update to highest (i.e. 'best') quality score
+		#
+		for read in mouselist:
+			if 0x4&read.flag: # flag 0x4 means unaligned
+				continue
+		   # directionality (_1 or _2)
+			d12 = 2 if 0x40&read.flag else 3
+			for x in range(0, len(bwatagsigns)):
+				QScore = bwatagsigns[x]*read.opt(bwatags[x])
+				if AS[x][d12]<QScore:
+					AS[x][d12]=QScore # update to highest (i.e. 'best') quality score
+		#
+		for x in range(0, len(bwatagsigns)):
+			if max(AS[x][0:2]) > max(AS[x][2:4]) or max(AS[x][0:2]) == max(AS[x][2:4]) and min(AS[x][0:2]) > min(AS[x][2:4]):
+				# assign to human
+				return 1
+			elif max(AS[x][0:2]) < max(AS[x][2:4]) or max(AS[x][0:2]) == max(AS[x][2:4]) and min(AS[x][0:2]) < min(AS[x][2:4]):
+				# assign to mouse
+				return -1
+		return 0 # ambiguous
 	else:
 		print("Not implemented yet")
 		sys.exit(2)		
