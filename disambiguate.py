@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+"""
+See main function disambiguate()
+"""
 from __future__ import print_function
 import sys, getopt, re, time, pysam
 from array import array
@@ -161,7 +165,7 @@ def main(argv):
 	if len(humanfile) < 1 or len(mousefile) < 1:
 		print("Two input BAM files must be specified using options -h and -m")
 		sys.exit(2)
-	if len(samplenameprefix) < 1
+	if len(samplenameprefix) < 1:
 		humanprefix = path.basename(humanfile.replace(".bam",""))
 		mouseprefix = path.basename(mousefile.replace(".bam",""))
 	else:
@@ -207,14 +211,14 @@ def main(argv):
 		sys.exit(2)
 	
 	EOFmouse = EOFhuman = False
+	prevHumID = '-+=RANDOMSTRING=+-'
+	prevMouID = '-+=RANDOMSTRING=+-'
 	while not EOFmouse&EOFhuman:
 		while not (nat_cmp(nexthumread.qname,nextmouread.qname) == 0):
-			# check order between current human and mouse qname (find a point where they're identical, i.e. in sync)
-			prevHumID = None
-			prevMouID = None
+			# check order between current human and mouse qname (find a point where they're identical, i.e. in sync)		
 			while nat_cmp(nexthumread.qname,nextmouread.qname) > 0 and not EOFmouse: # mouse is "behind" human, output to mouse disambiguous
 				myMouseUniqueFile.write(nextmouread)
-				if nextmouread.qname is not prevMouID:
+				if not nextmouread.qname == prevMouID:
 					nummou+=1 # increment mouse counter for unique only
 				prevMouID = nextmouread.qname
 				try:
@@ -224,7 +228,9 @@ def main(argv):
 					EOFmouse=True
 			while nat_cmp(nexthumread.qname,nextmouread.qname) < 0 and not EOFhuman: # human is "behind" mouse, output to human disambiguous
 				myHumanUniqueFile.write(nexthumread)
-				if nexthumread.qname is not prevHumID:
+				#print(nexthumread.qname + " " + prevHumID +" " +str(not nexthumread.qname == prevHumID))
+				#temp = raw_input("press enter: ")
+				if not nexthumread.qname == prevHumID:
 					numhum+=1 # increment human counter for unique only
 				prevHumID = nexthumread.qname
 				try:
@@ -268,10 +274,10 @@ def main(argv):
 					myHumanAmbiguousFile.write(myRead)
 		if EOFhuman:
 			#flush the rest of the mouse reads
-			prevMouID = None
+			#prevMouID = None
 			while not EOFmouse:
 				myMouseUniqueFile.write(nextmouread)
-				if nextmouread.qname is not prevMouID:
+				if not nextmouread.qname == prevMouID:
 					nummou+=1 # increment mouse counter for unique only
 				prevMouID = nextmouread.qname
 				try:
@@ -281,10 +287,10 @@ def main(argv):
 					EOFmouse=True
 		if EOFmouse:
 			#flush the rest of the human reads
-			prevHumID = None
+			#prevHumID = None
 			while not EOFhuman:
 				myHumanUniqueFile.write(nexthumread)
-				if nexthumread.qname is not prevHumID:
+				if not nexthumread.qname == prevHumID:
 					numhum+=1 # increment human counter for unique only
 				prevHumID = nexthumread.qname
 				try:
