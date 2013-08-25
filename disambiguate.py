@@ -186,8 +186,10 @@ def main(argv):
 		humanfilesorted = path.join(intermdir,humanprefix+".human.namesorted.bam")
 		mousefilesorted = path.join(intermdir,mouseprefix+".mouse.namesorted.bam")
 		#print("Name sorting human and mouse BAM files using samtools")
-		pysam.sort("-n","-m","2000000000",humanfile,humanfilesorted.replace(".bam",""))
-		pysam.sort("-n","-m","2000000000",mousefile,mousefilesorted.replace(".bam",""))
+		if not path.isfile(humanfilesorted):
+			pysam.sort("-n","-m","2000000000",humanfile,humanfilesorted.replace(".bam",""))
+		if not path.isfile(mousefilesorted):
+			pysam.sort("-n","-m","2000000000",mousefile,mousefilesorted.replace(".bam",""))
 		#print("Intermediate name sorted BAM files stored under " + intermdir(
 	
 	#print("Processing human and mouse files for ambiguous reads")
