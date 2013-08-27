@@ -202,7 +202,7 @@ def main(argv):
 	myHumanAmbiguousFile = pysam.Samfile(path.join(outputdir, humanprefix+".ambiguousHuman.bam"), "wb", template=myHumanFile)
 	myMouseUniqueFile = pysam.Samfile(path.join(outputdir, mouseprefix+".mouse.bam"), "wb", template=myMouseFile)
 	myMouseAmbiguousFile = pysam.Samfile(path.join(outputdir, mouseprefix+".ambiguousMouse.bam"), "wb", template=myMouseFile)
-	summaryFile = open(path.join(outputdir,'summary2.txt'),'w')
+	summaryFile = open(path.join(outputdir,humanprefix+'_summary.txt'),'w')
 	
 	#initialise
 	try: 
