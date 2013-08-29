@@ -1,11 +1,63 @@
 #!/usr/bin/env python
 """
-See main function disambiguate()
+This is the main function to call for disambiguating between a human and 
+mouse BAM files that have alignments from the same source of fastq files.
+It is part of the explant RNA/DNA-Seq workflow where an informatics 
+approach is used to distinguish between human and mouse RNA/DNA reads.
+	
+For reads that have aligned to both organisms, the functionality is based on 
+comparing quality scores from either Tophat of BWA (under development). Read
+name is used to collect all alignments for both mates (_1 and _2) and 
+compared between human and mouse alignments.
+
+For tophat (default, can be changed using option -a), the sum of the flags XO,
+NM and NH is evaluated and the lowest sum wins the paired end reads. For equal
+scores, the reads are assigned as ambiguous.
+
+The alternative algorithm (bwa) disambiguates (for aligned reads) by tags AS 
+(alignment score, higher better), NM (edit distance, lower better) and XS 
+(suboptimal alignment score, higher better), by first looking at AS, then 
+NM and finally XS.
+
+
+Usage: 
+disambiguate.py [-h <human.bam>] [-m <mouse.bam>] [-o <outputdir>] [-d] [-i <intermediatedir>] [-s <samplenameprefix>] [-a ALGORITHM]
+
+If <samplenameprefix> is provided it will be used in the output filenames, 
+otherwise the output filenames will be named after <mouse.bam> and <human.bam>
+
+N.B. that Tophat2 always renames its output as accepted_hits.bam 
+regardless of the fastq filenames and therefore it is a very good 
+idea to provide a <samplenameprefix>
+
+Options:
+  -h <human.bam>           Input human BAM file location (REQUIRED)
+  -m <mouse.bam>           Input mouse BAM file location (REQUIRED)
+  -o <outputdir>           Output directory. If the directory does not exist it
+                           will be generated. If not provided, 'disambres/' 
+                           will be used.
+  -d                       Disable BAM file sorting by name. Using this option 
+                           it is possible to serve BAM files that have already
+                           been name sorted using samtools
+  -i <intermediatedir>     Location where to store intermediate name sorted BAM
+                           files (if name sorting was not disabled). If not 
+                           provided 'intermfiles/' will be used
+  -s <samplenameprefix>    A prefix (e.g. sample name) to use for the output 
+                           BAM files. If not provided, the human BAM file 
+                           prefix will be used.
+  -a ALGORITHM             tophat (default) or bwa. Note that for bwa 
+                           alignments the tag provided in the BAM files are 
+                           different to those from tophat.
+		
+Code by Miika Ahdesmaki July-August 2013.
 """
+
+
 from __future__ import print_function
 import sys, getopt, re, time, pysam
 from array import array
 from os import path, makedirs
+from docopt import docopt
 
 # "natural comparison" for strings
 def nat_cmp(a, b):
@@ -101,69 +153,24 @@ def disambiguate(humanlist, mouselist, disambalgo):
 
 #code
 def main(argv):
-	"""
-	This is the main function to call for disambiguating between a human and mouse BAM files that have alignments from the same source of fastq files.
-	It is part of the explant RNA/DNA-Seq workflow where an informatics approach is used to distinguish between human and mouse RNA/DNA reads.
-	
-	For reads that have aligned to both organisms, the functionality is based on comparing quality scores from either Tophat of BWA (under development). Read name is used to collect all alignments for both mates (_1 and _2) and compared between human and mouse alignments.
-	For tophat (default, can be changed using option -a), the sum of the flags XO, NM and NH is evaluated and the lowest sum wins the paired end reads. For equal scores, the reads are assigned as ambiguous.
-	The alternative algorithm (bwa) disambiguates (for aligned reads) by tags AS (alignment score, higher better), NM (edit distance, lower better) and XS (suboptimal alignment score, higher better), by first looking at AS, then NM and finally XS.
-	
-	Usage: disambiguate.py -h <human.bam> -m <mouse.bam> -o <outputdir> (-d -i <intermediatedir> -s <samplenameprefix> -a tophat(default)/bwa)
-	If <samplenameprefix> is provided it will be used in the output filenames, otherwise the output filenames will be named after <mouse.bam> and <human.bam>
-	Note well that Tophat2 always renames its output as accepted_hits.bam regardless of the fastq filenames and therefore it is a very good idea to provide a <samplenameprefix>
-	
-	
-	For usage help call disambiguate(.main) with option --help
-	
-	Code by Miika Ahdesmaki July-August 2013.
-	"""
-	numhum = nummou = numamb = 0
-	
-	humanfile = ''
-	mousefile = ''
-	samplenameprefix = ''
-	outputdir = 'disambres/'
-	intermdir = 'intermfiles/'
-	disablesort = False
+	numhum = nummou = numamb = 0	
 	starttime = time.clock()
-	disambalgo = 'tophat'
+	# parse inputs
+	humanfile = argv['-h'] if argv['-h'] is not None else ''
+	mousefile = argv['-m'] if argv['-h'] is not None else ''
+	samplenameprefix = argv['-s'] if argv['-s'] is not None else ''
+	outputdir = argv['-o'] if argv['-o'] is not None else 'disambres/'
+	intermdir = argv['-i'] if argv['-i'] is not None else 'intermfiles/'
+	disablesort = True if argv['-d'] else False
+	disambalgo = argv['-a'] if argv['-a'] is not None else 'tophat'
 	supportedalgorithms = set()
 	supportedalgorithms.add('tophat')
 	supportedalgorithms.add('bwa')
-	UsageString = 'Usage: disambiguate.py -h <human.bam> -m <mouse.bam> -o <outputdir> (-d -i <intermediatedir> -s <samplenameprefix> -a tophat(default)/bwa)'
-	# parse input arguments
-	try:
-		opts, args = getopt.getopt(argv,"h:m:o:di:s:a:",["help"])
-		if len(opts) < 2:
-			print(UsageString)
-			print('This script orders the BAM files according to read name unless disabled using -d')
-			sys.exit()
-	except getopt.GetoptError:
-		print(UsageString)
-		print('This script orders the BAM files according to read name unless disabled using -d')
-		sys.exit(2)
-	for opt, arg in opts:
-		if opt == '--help':
-			print(UsageString)
-			print('This script orders the BAM files according to read name unless disabled using -d')
-			sys.exit(2)
-		elif opt in ("-h"):
-			humanfile = arg
-		elif opt in ("-m"):
-			mousefile = arg
-		elif opt in ("-o"):
-			outputdir = arg
-		elif opt in ("-d"):
-			disablesort = True
-		elif opt in ("-i"):
-			intermdir = arg
-		elif opt in ("-s"):
-			samplenameprefix = arg
-		elif opt in ("-a"):
-			disambalgo = arg.lower() # lower case
-	if len(humanfile) < 1 or len(mousefile) < 1:
-		print("Two input BAM files must be specified using options -h and -m")
+	
+	# check existence of input BAM files
+	if len(humanfile) < 1 or len(mousefile) < 1 or not path.isfile(humanfile) or not not path.isfile(mousefile):
+		print(__doc__)
+		sys.stderr.write("\nERROR in disambiguate.py: Two existing input BAM files must be specified using options -h and -m\n")
 		sys.exit(2)
 	if len(samplenameprefix) < 1:
 		humanprefix = path.basename(humanfile.replace(".bam",""))
@@ -316,4 +323,6 @@ def main(argv):
 	#print("Time taken in minutes " + str((time.clock() - starttime)/60))
 
 if __name__ == "__main__":
-	main(sys.argv[1:])
+	opts = docopt(__doc__,  help=False)  
+	main(opts)
+	#main(sys.argv[1:])
