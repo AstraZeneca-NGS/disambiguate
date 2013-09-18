@@ -156,8 +156,8 @@ def main(argv):
 	numhum = nummou = numamb = 0	
 	starttime = time.clock()
 	# parse inputs
-	humanfile = argv['-h'] if argv['-h'] is not None else ''
-	mousefile = argv['-m'] if argv['-h'] is not None else ''
+	humanfilename = argv['-h'] if argv['-h'] is not None else ''
+	mousefilename = argv['-m'] if argv['-h'] is not None else ''
 	samplenameprefix = argv['-s'] if argv['-s'] is not None else ''
 	outputdir = argv['-o'] if argv['-o'] is not None else 'disambres/'
 	intermdir = argv['-i'] if argv['-i'] is not None else 'intermfiles/'
@@ -168,13 +168,13 @@ def main(argv):
 	supportedalgorithms.add('bwa')
 	
 	# check existence of input BAM files
-	if len(humanfile) < 1 or len(mousefile) < 1 or not path.isfile(humanfile) or not not path.isfile(mousefile):
+	if len(humanfilename) < 1 or len(mousefilename) < 1 or not path.isfile(humanfilename) or not not path.isfile(mousefilename):
 		print(__doc__)
 		sys.stderr.write("\nERROR in disambiguate.py: Two existing input BAM files must be specified using options -h and -m\n")
 		sys.exit(2)
 	if len(samplenameprefix) < 1:
-		humanprefix = path.basename(humanfile.replace(".bam",""))
-		mouseprefix = path.basename(mousefile.replace(".bam",""))
+		humanprefix = path.basename(humanfilename.replace(".bam",""))
+		mouseprefix = path.basename(mousefilename.replace(".bam",""))
 	else:
 		humanprefix = samplenameprefix
 		mouseprefix = samplenameprefix
@@ -185,24 +185,24 @@ def main(argv):
 		sys.exit(2)
 	
 	if disablesort:
-		humanfilesorted = humanfile # assumed to be sorted externally...
-		mousefilesorted = mousefile # assumed to be sorted externally...
+		humanfilenamesorted = humanfilename # assumed to be sorted externally...
+		mousefilenamesorted = mousefilename # assumed to be sorted externally...
 	else:
 		if not path.isdir(intermdir):
 			makedirs(intermdir)
-		humanfilesorted = path.join(intermdir,humanprefix+".human.namesorted.bam")
-		mousefilesorted = path.join(intermdir,mouseprefix+".mouse.namesorted.bam")
+		humanfilenamesorted = path.join(intermdir,humanprefix+".human.namesorted.bam")
+		mousefilenamesorted = path.join(intermdir,mouseprefix+".mouse.namesorted.bam")
 		#print("Name sorting human and mouse BAM files using samtools")
-		if not path.isfile(humanfilesorted):
-			pysam.sort("-n","-m","2000000000",humanfile,humanfilesorted.replace(".bam",""))
-		if not path.isfile(mousefilesorted):
-			pysam.sort("-n","-m","2000000000",mousefile,mousefilesorted.replace(".bam",""))
+		if not path.isfile(humanfilenamesorted):
+			pysam.sort("-n","-m","2000000000",humanfilename,humanfilenamesorted.replace(".bam",""))
+		if not path.isfile(mousefilenamesorted):
+			pysam.sort("-n","-m","2000000000",mousefilename,mousefilenamesorted.replace(".bam",""))
 		#print("Intermediate name sorted BAM files stored under " + intermdir(
 	
 	#print("Processing human and mouse files for ambiguous reads")
    # read in human reads and form a dictionary
-	myHumanFile = pysam.Samfile(humanfilesorted, "rb" )
-	myMouseFile = pysam.Samfile(mousefilesorted, "rb" )
+	myHumanFile = pysam.Samfile(humanfilenamesorted, "rb" )
+	myMouseFile = pysam.Samfile(mousefilenamesorted, "rb" )
 	if not path.isdir(outputdir):
 		makedirs(outputdir)
 	myHumanUniqueFile = pysam.Samfile(path.join(outputdir, humanprefix+".human.bam"), "wb", template=myHumanFile) 
