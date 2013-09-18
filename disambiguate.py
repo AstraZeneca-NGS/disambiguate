@@ -157,7 +157,7 @@ def main(argv):
 	starttime = time.clock()
 	# parse inputs
 	humanfilename = argv['-h'] if argv['-h'] is not None else ''
-	mousefilename = argv['-m'] if argv['-h'] is not None else ''
+	mousefilename = argv['-m'] if argv['-m'] is not None else ''
 	samplenameprefix = argv['-s'] if argv['-s'] is not None else ''
 	outputdir = argv['-o'] if argv['-o'] is not None else 'disambres/'
 	intermdir = argv['-i'] if argv['-i'] is not None else 'intermfiles/'
