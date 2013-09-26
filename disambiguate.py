@@ -168,7 +168,7 @@ def main(argv):
 	supportedalgorithms.add('bwa')
 	
 	# check existence of input BAM files
-	if len(humanfilename) < 1 or len(mousefilename) < 1 or not path.isfile(humanfilename) or not not path.isfile(mousefilename):
+	if len(humanfilename) < 1 or len(mousefilename) < 1 or not path.isfile(humanfilename) or not path.isfile(mousefilename):
 		print(__doc__)
 		sys.stderr.write("\nERROR in disambiguate.py: Two existing input BAM files must be specified using options -h and -m\n")
 		sys.exit(2)
