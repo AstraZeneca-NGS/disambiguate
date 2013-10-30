@@ -66,7 +66,7 @@ Options:
                            provided 'intermfiles/' will be used
   -s <samplenameprefix>    A prefix (e.g. sample name) to use for the output 
                            BAM files. If not provided, the human BAM file 
-                           prefix will be used. DO NOT INCLUDE .bam in the prefix!
+                           prefix will be used. Do not include .bam in the prefix
   -a ALGORITHM             tophat (default) or bwa. Note that for bwa 
                            alignments the tag provided in the BAM files are 
                            different to those from tophat
@@ -199,9 +199,10 @@ def main(argv):
 		humanprefix = path.basename(humanfilename.replace(".bam",""))
 		mouseprefix = path.basename(mousefilename.replace(".bam",""))
 	else:
+		if samplenameprefix.endswith(".bam"):
+			samplenameprefix = samplenameprefix[0:samplenameprefix.rfind(".bam")] # the above if is not stricly necessary for this to work
 		humanprefix = samplenameprefix
 		mouseprefix = samplenameprefix
-	
 	samplenameprefix = None # clear variable
 	if disambalgo not in supportedalgorithms:
 		print(disambalgo+" is not a supported disambiguation scheme at the moment.")
