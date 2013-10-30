@@ -1,12 +1,34 @@
 #!/usr/bin/env python
 """
+The MIT License (MIT)
+ 
+Copyright (c) 2013 AstraZeneca (Miika Ahdesmaki, Zhongwu Lai)
+ 
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+ 
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+ 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
 This is the main function to call for disambiguating between a human and 
 mouse BAM files that have alignments from the same source of fastq files.
 It is part of the explant RNA/DNA-Seq workflow where an informatics 
 approach is used to distinguish between human and mouse RNA/DNA reads.
 	
 For reads that have aligned to both organisms, the functionality is based on 
-comparing quality scores from either Tophat of BWA (under development). Read
+comparing quality scores from either Tophat of BWA. Read
 name is used to collect all alignments for both mates (_1 and _2) and 
 compared between human and mouse alignments.
 
@@ -44,12 +66,13 @@ Options:
                            provided 'intermfiles/' will be used
   -s <samplenameprefix>    A prefix (e.g. sample name) to use for the output 
                            BAM files. If not provided, the human BAM file 
-                           prefix will be used.
+                           prefix will be used. DO NOT INCLUDE .bam in the prefix!
   -a ALGORITHM             tophat (default) or bwa. Note that for bwa 
                            alignments the tag provided in the BAM files are 
-                           different to those from tophat.
+                           different to those from tophat
 		
-Code by Miika Ahdesmaki July-August 2013.
+Code by Miika Ahdesmaki July-August 2013, based on original Perl implementation 
+for Tophat by Zhongwu Lai.
 """
 
 
