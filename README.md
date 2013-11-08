@@ -8,3 +8,5 @@ Bamtools C++ API.
 
 For usage help, run disambiguate.py as-is.
 
+To compile the C++ program, use the following syntax:
+c++ -I /path/to/bamtools_c_api/include/ -L /path/to/bamtools_c_api/lib/ -o disambiguate dismain.cpp -lz -lbamtools
