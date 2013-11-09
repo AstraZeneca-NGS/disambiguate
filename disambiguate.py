@@ -19,36 +19,6 @@ The alternative algorithm (bwa) disambiguates (for aligned reads) by tags AS
 (suboptimal alignment score, higher better), by first looking at AS, then
 NM and finally XS.
 
-
-Usage:
-disambiguate.py [-h <human.bam>] [-m <mouse.bam>] [-o <outputdir>] [-d] [-i <intermediatedir>] [-s <samplenameprefix>] [-a ALGORITHM]
-
-If <samplenameprefix> is provided it will be used in the output filenames,
-otherwise the output filenames will be named after <mouse.bam> and <human.bam>
-
-N.B. that Tophat2 always renames its output as accepted_hits.bam
-regardless of the fastq filenames and therefore it is a very good
-idea to provide a <samplenameprefix>
-
-Options:
-  -h <human.bam>           Input human BAM file location (REQUIRED)
-  -m <mouse.bam>           Input mouse BAM file location (REQUIRED)
-  -o <outputdir>           Output directory. If the directory does not exist it
-                           will be generated. If not provided, 'disambres/'
-                           will be used.
-  -d                       Disable BAM file sorting by name. Using this option
-                           it is possible to serve BAM files that have already
-                           been name sorted using samtools
-  -i <intermediatedir>     Location where to store intermediate name sorted BAM
-                           files (if name sorting was not disabled). If not
-                           provided 'intermfiles/' will be used
-  -s <samplenameprefix>    A prefix (e.g. sample name) to use for the output
-                           BAM files. If not provided, the human BAM file
-                           prefix will be used. Do not include .bam in the prefix
-  -a ALGORITHM             tophat (default) or bwa. Note that for bwa
-                           alignments the tag provided in the BAM files are
-                           different to those from tophat
-
 Code by Miika Ahdesmaki July-August 2013, based on original Perl implementation
 for Tophat by Zhongwu Lai.
 """
@@ -58,7 +28,7 @@ from __future__ import print_function
 import sys, getopt, re, time, pysam
 from array import array
 from os import path, makedirs
-from docopt import docopt
+from argparse import ArgumentParser
 
 # "natural comparison" for strings
 def nat_cmp(a, b):
@@ -157,21 +127,19 @@ def main(argv):
     numhum = nummou = numamb = 0
     starttime = time.clock()
     # parse inputs
-    humanfilename = argv['-h'] if argv['-h'] is not None else ''
-    mousefilename = argv['-m'] if argv['-m'] is not None else ''
-    samplenameprefix = argv['-s'] if argv['-s'] is not None else ''
-    outputdir = argv['-o'] if argv['-o'] is not None else 'disambres/'
-    intermdir = argv['-i'] if argv['-i'] is not None else 'intermfiles/'
-    disablesort = True if argv['-d'] else False
-    disambalgo = argv['-a'] if argv['-a'] is not None else 'tophat'
-    supportedalgorithms = set()
-    supportedalgorithms.add('tophat')
-    supportedalgorithms.add('bwa')
+    humanfilename = args.A
+    mousefilename = args.B
+    samplenameprefix = args.prefix
+    outputdir = args.output_dir
+    intermdir = args.tmp_dir
+    disablesort = args.no_sort
+    disambalgo = args.aligner
+    supportedalgorithms = set(['tophat', 'bwa'])
 
     # check existence of input BAM files
-    if len(humanfilename) < 1 or len(mousefilename) < 1 or not path.isfile(humanfilename) or not path.isfile(mousefilename):
-        print(__doc__)
-        sys.stderr.write("\nERROR in disambiguate.py: Two existing input BAM files must be specified using options -h and -m\n")
+    if not (file_exists(humanfilename) and file_exists(mousefilename)):
+        sys.stderr.write("\nERROR in disambiguate.py: Two existing input BAM files "
+                         "must be specified using options -h and -m\n")
         sys.exit(2)
     if len(samplenameprefix) < 1:
         humanprefix = path.basename(humanfilename.replace(".bam",""))
@@ -324,7 +292,50 @@ def main(argv):
 
     #print("Time taken in minutes " + str((time.clock() - starttime)/60))
 
+def file_exists(fname):
+    """Check if a file exists and is non-empty.
+    """
+    return path.exists(fname) and path.getsize(fname) > 0
+
 if __name__ == "__main__":
-    opts = docopt(__doc__,  help=False)
-    main(opts)
-    #main(sys.argv[1:])
+   description = """
+disambiguate.py disambiguates between two organisms that have alignments
+from the same source of fastq files. An example where this might be
+useful is as part of an explant RNA/DNA-Seq workflow where an informatics
+approach is used to distinguish between human and mouse RNA/DNA reads.
+
+For reads that have aligned to both organisms, the functionality is based on
+comparing quality scores from either Tophat of BWA. Read
+name is used to collect all alignments for both mates (_1 and _2) and
+compared between human and mouse alignments.
+
+For tophat (default, can be changed using option -a), the sum of the flags XO,
+NM and NH is evaluated and the lowest sum wins the paired end reads. For equal
+scores, the reads are assigned as ambiguous.
+
+The alternative algorithm (bwa) disambiguates (for aligned reads) by tags AS
+(alignment score, higher better), NM (edit distance, lower better) and XS
+(suboptimal alignment score, higher better), by first looking at AS, then
+NM and finally XS.
+   """
+
+   parser = ArgumentParser(description=description)
+   parser.add_argument('A', help='Input BAM file A.')
+   parser.add_argument('B', help='Input BAM file B.')
+   parser.add_argument('-o', '--output-dir', default="disambres",
+                       help='Output directory.')
+   parser.add_argument('-i', '--tmp-dir', default="intermfiles",
+                       help='Location to store temporary files')
+   parser.add_argument('-d', '--no-sort', action='store_true', default=False,
+                       help='Disable BAM file sorting. Use this option if the '
+                       'files have already been name sorted.')
+   parser.add_argument('-s', '--prefix', default='',
+                       help='A prefix (e.g. sample name) to use for the output '
+                       'BAM files. If not provided, the first BAM file prefix '
+                       'will be used. Do not include .bam in the prefix.')
+   parser.add_argument('-a', '--aligner', default='tophat',
+                       choices=('tophat', 'bwa'),
+                       help='The aligner used to generate these reads. Some '
+                       'aligners set different flags.')
+   args = parser.parse_args()
+   main(args)
