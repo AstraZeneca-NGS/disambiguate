@@ -162,14 +162,10 @@ def main(argv):
             makedirs(intermdir)
         humanfilenamesorted = path.join(intermdir,humanprefix+".human.namesorted.bam")
         mousefilenamesorted = path.join(intermdir,mouseprefix+".mouse.namesorted.bam")
-        #print("Name sorting human and mouse BAM files using samtools")
         if not path.isfile(humanfilenamesorted):
             pysam.sort("-n","-m","2000000000",humanfilename,humanfilenamesorted.replace(".bam",""))
         if not path.isfile(mousefilenamesorted):
             pysam.sort("-n","-m","2000000000",mousefilename,mousefilenamesorted.replace(".bam",""))
-        #print("Intermediate name sorted BAM files stored under " + intermdir(
-
-    #print("Processing human and mouse files for ambiguous reads")
    # read in human reads and form a dictionary
     myHumanFile = pysam.Samfile(humanfilenamesorted, "rb" )
     myMouseFile = pysam.Samfile(mousefilenamesorted, "rb" )
@@ -203,26 +199,21 @@ def main(argv):
                 try:
                     nextmouread=myMouseFile.next()
                 except StopIteration:
-                    #print("1")
                     EOFmouse=True
             while nat_cmp(nexthumread.qname,nextmouread.qname) < 0 and not EOFhuman: # human is "behind" mouse, output to human disambiguous
                 myHumanUniqueFile.write(nexthumread)
-                #print(nexthumread.qname + " " + prevHumID +" " +str(not nexthumread.qname == prevHumID))
-                #temp = raw_input("press enter: ")
                 if not nexthumread.qname == prevHumID:
                     numhum+=1 # increment human counter for unique only
                 prevHumID = nexthumread.qname
                 try:
                     nexthumread=myHumanFile.next()
                 except StopIteration:
-                    #print("2")
                     EOFhuman=True
             if EOFhuman or EOFmouse:
                 break
         # at this point the read qnames are identical and/or we've reached EOF
         humlist = list()
         moulist = list()
-        #print(nexthumread.qname + " " + nextmouread.qname + " " + str(nat_cmp(nexthumread.qname,nextmouread.qname)))
         if nat_cmp(nexthumread.qname,nextmouread.qname) == 0:
             humlist.append(nexthumread)
             nexthumread = read_next_reads(myHumanFile, humlist) # read more reads with same qname (the function modifies humlist directly)
@@ -236,7 +227,6 @@ def main(argv):
         # perform comparison to check mouse, human or ambiguous
         if len(moulist) > 0 and len(humlist) > 0:
             myAmbiguousness = disambiguate(humlist, moulist, disambalgo)
-            #print(myAmbiguousness)
             if myAmbiguousness < 0: # mouse
                 nummou+=1 # increment mouse counter
                 for myRead in moulist:
@@ -253,7 +243,6 @@ def main(argv):
                     myHumanAmbiguousFile.write(myRead)
         if EOFhuman:
             #flush the rest of the mouse reads
-            #prevMouID = None
             while not EOFmouse:
                 myMouseUniqueFile.write(nextmouread)
                 if not nextmouread.qname == prevMouID:
@@ -266,7 +255,6 @@ def main(argv):
                     EOFmouse=True
         if EOFmouse:
             #flush the rest of the human reads
-            #prevHumID = None
             while not EOFhuman:
                 myHumanUniqueFile.write(nexthumread)
                 if not nexthumread.qname == prevHumID:
@@ -275,10 +263,7 @@ def main(argv):
                 try:
                     nexthumread=myHumanFile.next()
                 except StopIteration:
-                    #print("4")
                     EOFhuman=True
-
-        #end while not
 
     summaryFile.write("sample\tunique human pairs\tunique mouse pairs\tambiguous pairs\n")
     summaryFile.write(humanprefix+"\t"+str(numhum)+"\t"+str(nummou)+"\t"+str(numamb)+"\n")
@@ -290,7 +275,6 @@ def main(argv):
     myMouseUniqueFile.close()
     myMouseAmbiguousFile.close()
 
-    #print("Time taken in minutes " + str((time.clock() - starttime)/60))
 
 def file_exists(fname):
     """Check if a file exists and is non-empty.
