@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 """
-This is the main function to call for disambiguating between a human and
-mouse BAM files that have alignments from the same source of fastq files.
+This is the main function to call for disambiguating between BAM files 
+from two species that have alignments from the same source of fastq files.
 It is part of the explant RNA/DNA-Seq workflow where an informatics
-approach is used to distinguish between human and mouse RNA/DNA reads.
+approach is used to distinguish between e.g. human and mouse or rat RNA/DNA reads.
 
 For reads that have aligned to both organisms, the functionality is based on
 comparing quality scores from either Tophat of BWA. Read
 name is used to collect all alignments for both mates (_1 and _2) and
-compared between human and mouse alignments.
+compared between the alignments from the two species.
 
 For tophat (default, can be changed using option -a), the sum of the flags XO,
 NM and NH is evaluated and the lowest sum wins the paired end reads. For equal
@@ -28,7 +28,7 @@ from __future__ import print_function
 import sys, getopt, re, time, pysam
 from array import array
 from os import path, makedirs
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawTextHelpFormatter
 
 # "natural comparison" for strings
 def nat_cmp(a, b):
@@ -123,7 +123,7 @@ def disambiguate(humanlist, mouselist, disambalgo):
 
 
 #code
-def main(argv):
+def main(args):
     numhum = nummou = numamb = 0
     starttime = time.clock()
     # parse inputs
@@ -139,7 +139,7 @@ def main(argv):
     # check existence of input BAM files
     if not (file_exists(humanfilename) and file_exists(mousefilename)):
         sys.stderr.write("\nERROR in disambiguate.py: Two existing input BAM files "
-                         "must be specified using options -h and -m\n")
+                         "must be specified as positional arguments\n")
         sys.exit(2)
     if len(samplenameprefix) < 1:
         humanprefix = path.basename(humanfilename.replace(".bam",""))
@@ -160,8 +160,8 @@ def main(argv):
     else:
         if not path.isdir(intermdir):
             makedirs(intermdir)
-        humanfilenamesorted = path.join(intermdir,humanprefix+".human.namesorted.bam")
-        mousefilenamesorted = path.join(intermdir,mouseprefix+".mouse.namesorted.bam")
+        humanfilenamesorted = path.join(intermdir,humanprefix+".speciesA.namesorted.bam")
+        mousefilenamesorted = path.join(intermdir,mouseprefix+".speciesB.namesorted.bam")
         if not path.isfile(humanfilenamesorted):
             pysam.sort("-n","-m","2000000000",humanfilename,humanfilenamesorted.replace(".bam",""))
         if not path.isfile(mousefilenamesorted):
@@ -171,10 +171,10 @@ def main(argv):
     myMouseFile = pysam.Samfile(mousefilenamesorted, "rb" )
     if not path.isdir(outputdir):
         makedirs(outputdir)
-    myHumanUniqueFile = pysam.Samfile(path.join(outputdir, humanprefix+".human.bam"), "wb", template=myHumanFile)
-    myHumanAmbiguousFile = pysam.Samfile(path.join(outputdir, humanprefix+".ambiguousHuman.bam"), "wb", template=myHumanFile)
-    myMouseUniqueFile = pysam.Samfile(path.join(outputdir, mouseprefix+".mouse.bam"), "wb", template=myMouseFile)
-    myMouseAmbiguousFile = pysam.Samfile(path.join(outputdir, mouseprefix+".ambiguousMouse.bam"), "wb", template=myMouseFile)
+    myHumanUniqueFile = pysam.Samfile(path.join(outputdir, humanprefix+".disambiguatedSpeciesA.bam"), "wb", template=myHumanFile)
+    myHumanAmbiguousFile = pysam.Samfile(path.join(outputdir, humanprefix+".ambiguousSpeciesA.bam"), "wb", template=myHumanFile)
+    myMouseUniqueFile = pysam.Samfile(path.join(outputdir, mouseprefix+".disambiguatedSpeciesB.bam"), "wb", template=myMouseFile)
+    myMouseAmbiguousFile = pysam.Samfile(path.join(outputdir, mouseprefix+".ambiguousSpeciesB.bam"), "wb", template=myMouseFile)
     summaryFile = open(path.join(outputdir,humanprefix+'_summary.txt'),'w')
 
     #initialise
@@ -265,7 +265,7 @@ def main(argv):
                 except StopIteration:
                     EOFhuman=True
 
-    summaryFile.write("sample\tunique human pairs\tunique mouse pairs\tambiguous pairs\n")
+    summaryFile.write("sample\tunique species A pairs\tunique species B pairs\tambiguous pairs\n")
     summaryFile.write(humanprefix+"\t"+str(numhum)+"\t"+str(nummou)+"\t"+str(numamb)+"\n")
     summaryFile.close()
     myHumanFile.close()
@@ -293,19 +293,30 @@ comparing quality scores from either Tophat of BWA. Read
 name is used to collect all alignments for both mates (_1 and _2) and
 compared between human and mouse alignments.
 
-For tophat (default, can be changed using option -a), the sum of the flags XO,
+For tophat (default, can be changed using option -a), the sum of the tags XO,
 NM and NH is evaluated and the lowest sum wins the paired end reads. For equal
-scores, the reads are assigned as ambiguous.
+scores (both mates, both species), the reads are assigned as ambiguous.
 
 The alternative algorithm (bwa) disambiguates (for aligned reads) by tags AS
 (alignment score, higher better), NM (edit distance, lower better) and XS
 (suboptimal alignment score, higher better), by first looking at AS, then
 NM and finally XS.
+
+The output directory will contain four files:\n
+...disambiguatedSpeciesA.bam: Reads that could be assigned to species A
+...disambiguatedSpeciesB.bam: Reads that could be assigned to species B
+...ambiguousSpeciesA.bam: Reads aligned to species A that also aligned \n\tto B but could not be uniquely assigned to either
+...ambiguousSpeciesB.bam: Reads aligned to species B that also aligned \n\tto A but could not be uniquely assigned to either
+..._summary.txt: A summary of unique read names assigned to species A, B \n\tand ambiguous.
+
+Examples:
+disambiguate.py test/human.bam test/mouse.bam
+disambiguate.py -s mysample1 test/human.bam test/mouse.bam
    """
 
-   parser = ArgumentParser(description=description)
-   parser.add_argument('A', help='Input BAM file A.')
-   parser.add_argument('B', help='Input BAM file B.')
+   parser = ArgumentParser(description=description, formatter_class=RawTextHelpFormatter)
+   parser.add_argument('A', help='Input BAM file for species A.')
+   parser.add_argument('B', help='Input BAM file for species B.')
    parser.add_argument('-o', '--output-dir', default="disambres",
                        help='Output directory.')
    parser.add_argument('-i', '--intermediate-dir', default="intermfiles",
@@ -315,11 +326,11 @@ NM and finally XS.
                        'files have already been name sorted.')
    parser.add_argument('-s', '--prefix', default='',
                        help='A prefix (e.g. sample name) to use for the output '
-                       'BAM files. If not provided, the first BAM file prefix '
+                       'BAM files. If not provided, the input BAM file prefix '
                        'will be used. Do not include .bam in the prefix.')
    parser.add_argument('-a', '--aligner', default='tophat',
                        choices=('tophat', 'bwa'),
                        help='The aligner used to generate these reads. Some '
-                       'aligners set different flags.')
+                       'aligners set different tags.')
    args = parser.parse_args()
    main(args)
