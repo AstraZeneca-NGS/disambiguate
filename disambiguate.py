@@ -131,7 +131,7 @@ def main(argv):
     mousefilename = args.B
     samplenameprefix = args.prefix
     outputdir = args.output_dir
-    intermdir = args.tmp_dir
+    intermdir = args.intermediate_dir
     disablesort = args.no_sort
     disambalgo = args.aligner
     supportedalgorithms = set(['tophat', 'bwa'])
@@ -308,8 +308,8 @@ NM and finally XS.
    parser.add_argument('B', help='Input BAM file B.')
    parser.add_argument('-o', '--output-dir', default="disambres",
                        help='Output directory.')
-   parser.add_argument('-i', '--tmp-dir', default="intermfiles",
-                       help='Location to store temporary files')
+   parser.add_argument('-i', '--intermediate-dir', default="intermfiles",
+                       help='Location to store intermediate files')
    parser.add_argument('-d', '--no-sort', action='store_true', default=False,
                        help='Disable BAM file sorting. Use this option if the '
                        'files have already been name sorted.')
