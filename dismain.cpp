@@ -30,6 +30,7 @@
 //they just include various libraries which are needed for the code to function.
 //leave them alone.
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 //#include <getopt.h>
 #include <stdlib.h>
@@ -374,7 +375,7 @@ int disambiguate(list<BamAlignment>& hlist,list<BamAlignment>& mlist, string dis
 int main(int argc, char **argv) {
 
   string outputPath; //created now set by user later using ovalue
-  string suffix; //created now set by user later using svalue
+  string prefix; //created now set by user later using svalue
   string algorithm;//are you detecting a pattern yet? avalue...
   //input files are set here
   string human; //this is set by hvalue
@@ -424,7 +425,7 @@ Sample","string");
 
     // Get the value parsed by each arg.
     outputPath = outpudirArg.getValue();
-    suffix = prefixArg.getValue(); 
+    prefix = prefixArg.getValue(); 
     algorithm = alignerArg.getValue();
     // input files are set here
     human = speciesA.getValue(); 
@@ -435,30 +436,31 @@ Sample","string");
   
   //output files are set here
   //out file names are locked however can be customised with a prefix
-  //prefix is called suffix for some unknown reason i may change this
   //output path is set by user and then the file location is built using insertions
   string humanDisambiguous = "disambiguatedSpeciesA.bam"; //this stays the same/becomes new default
   humanDisambiguous.insert(0,"."); //same
-  humanDisambiguous.insert(0,suffix); //set by svalue
+  humanDisambiguous.insert(0,prefix); //set by svalue
   humanDisambiguous.insert(0,"/"); //same
   humanDisambiguous.insert(0,outputPath); //set by ovalue
   string humanAmbiguous = "ambiguousSpeciesA.bam";
   humanAmbiguous.insert(0,"."); //same
-  humanAmbiguous.insert(0,suffix); //set by svalue
+  humanAmbiguous.insert(0,prefix); //set by svalue
   humanAmbiguous.insert(0,"/"); // same
   humanAmbiguous.insert(0,outputPath); //set by ovalue
   string mouseDisambiguous = "disambiguatedSpeciesB.bam";
   mouseDisambiguous.insert(0,"."); //same
-  mouseDisambiguous.insert(0,suffix); //set by svalue
+  mouseDisambiguous.insert(0,prefix); //set by svalue
   mouseDisambiguous.insert(0,"/");//same
   mouseDisambiguous.insert(0,outputPath); //set by ovalue
   string mouseAmbiguous = "ambiguousSpeciesB.bam";
   mouseAmbiguous.insert(0,"."); //same
-  mouseAmbiguous.insert(0,suffix); //set by svalue
+  mouseAmbiguous.insert(0,prefix); //set by svalue
   mouseAmbiguous.insert(0,"/"); // same
   mouseAmbiguous.insert(0,outputPath); //set by ovalue
-
-
+  string summaryFile = "_summary.txt";
+  summaryFile.insert(0,prefix);
+  summaryFile.insert(0,"/");
+  summaryFile.insert(0,outputPath);
 
   //File input Readers
   BamReader humanReader; //makes new read object
@@ -525,7 +527,7 @@ Sample","string");
 
 	if (am.Name != prevMouID){ //if mouse name is unique
 	  nummou+=1;	}
-	prevMouID == am.Name;
+	prevMouID = am.Name;
 
 	if((mouseReader.GetNextAlignment(am)==false)) //getting next alignment and testing for EOF
 	  {
@@ -540,7 +542,7 @@ Sample","string");
 	//i think you can get the jist from before right?
 	if (ah.Name != prevHumID){
 	  numhum+=1;	}
-	prevHumID == ah.Name;
+	prevHumID = ah.Name;
 	if((humanReader.GetNextAlignment(ah)==false))
 	  {
 	    EOFhuman = true;
@@ -657,9 +659,11 @@ Sample","string");
   HAWriter.Close();
   MDWriter.Close();
   MAWriter.Close();
-
-
-
+  // write summary stats to file
+  ofstream myfile(summaryFile.c_str());
+  myfile << "sample\tunique species A pairs\tunique species B pairs\tambiguous pairs" <<endl;
+  myfile << prefix <<"\t" << numhum<<"\t" << nummou<<"\t" << numamb << endl;
+  myfile.close();
   return 0;
 
 }
