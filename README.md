@@ -1,10 +1,10 @@
 disambiguate
 ============
 
-Disambiguation algorithm for reads aligned to human and mouse genomes using Tophat or BWA mem.
-Both a Python and C++ implementation will be offered. The Python implementation has a dependency
-on the Pysam module. The C++ implementation will depend on the availability of zlib and the
-Bamtools C++ API. 
+Disambiguation algorithm for reads aligned to two species (e.g. human and mouse genomes) from 
+Tophat or BWA mem. Both a Python and C++ implementation will are offered. The Python 
+implementation has a dependency on the Pysam module. The C++ implementation depends on the 
+availability of zlib and the Bamtools C++ API. 
 
 Differences between the Python and C++ versions:
 1. The Python version can do name sorting of the reads (a necessary step) internally
