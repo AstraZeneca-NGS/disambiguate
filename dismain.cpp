@@ -40,13 +40,47 @@
 #include <list>
 #include <vector>
 #include <algorithm>
-#include <tclap/CmdLine.h>
+#include <tclap/CmdLine.h> // for parsing input arguments
+#include <sys/stat.h> // for directory creation
+#include <sys/types.h> // for directory flags
+#include <errno.h>
 
 //this thing let's us find the size of an array as c++ isn't smart enough for that
 #define ARRAY_SIZE(array) (sizeof((array))/sizeof((array[0])))
 //namespaces allow the use of commands that come with them
 using namespace std;
 using namespace BamTools;
+
+// mkdir -p function lifted (and modified) from http://stackoverflow.com/questions/675039/how-can-i-create-directory-tree-in-c-linux
+bool mkdirp(const char* path, mode_t mode) {
+  // const cast for hack
+  char* p = const_cast<char*>(path);
+  // check if the path begins with dots followed by a slash and skip
+  int myTempCounter = 0;
+  while(p[myTempCounter]=='.') myTempCounter++;
+  while(myTempCounter>0 && p[myTempCounter]=='/') myTempCounter++;
+  p = p+myTempCounter;
+  
+  // Do mkdir for each slash until end of string or error
+  while (*p != '\0') {
+    // Skip first character
+    while(*p == '/') p++;
+    // Find first slash or end
+    while(*p != '\0' && *p != '/') p++;
+    // Remember value from p
+    char v = *p;
+    // Write end of string at p
+    *p = '\0';
+    // Create folder from path to '\0' inserted at p
+    if(mkdir(path, mode) == -1 && errno != EEXIST) {
+      *p = v;
+      return false;
+    }
+    // Restore path to it's former glory
+    *p = v;
+  }
+  return true;
+}
 
 //much to my dismay these had to be global due to complications with method calls later on
 //they represent the ends of the input files
@@ -431,8 +465,14 @@ Sample","string");
     human = speciesA.getValue(); 
     mouse = speciesB.getValue();
   } catch (TCLAP::ArgException &e)  // catch any exceptions
-    { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
+    { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; exit(1);}
+  // check if output path exists and try to create it if it doesn't
   
+  // read/write/search permissions for owner and group, and with read/search permissions for others
+  if(!mkdirp(outputPath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)){
+    cerr << "Could not create output folder." << endl;
+    exit(1);
+  }
   
   //output files are set here
   //out file names are locked however can be customised with a prefix
@@ -466,10 +506,12 @@ Sample","string");
   BamReader humanReader; //makes new read object
   if( !humanReader.Open(human) ){ //checks whether it can open the file i.e if it is a bam file
     cerr << "Could not open input BAM file." << endl;
+    exit(1);
   }
   BamReader mouseReader;
   if( !mouseReader.Open(mouse) ){
     cerr << "Could not open input BAM file." << endl;
+    exit(1);
   }
 
   //Get headers and reference data from input files
@@ -485,18 +527,22 @@ Sample","string");
   if ( !HDWriter.Open(humanDisambiguous, humanHeader, humanReferences) ) { //checking whether the file can be
     //and written to.
     cerr << "Could not open output BAM file" << endl;
+    exit(1);
   }
   BamWriter HAWriter;
   if ( !HAWriter.Open(humanAmbiguous, humanHeader, humanReferences) ) {
     cerr << "Could not open output BAM file" << endl;
+    exit(1);
   }
   BamWriter MDWriter;
   if ( !MDWriter.Open(mouseDisambiguous, mouseHeader, mouseReferences) ) {
     cerr << "Could not open output BAM file" << endl;
+    exit(1);
   }
   BamWriter MAWriter;
   if ( !MAWriter.Open(mouseAmbiguous, mouseHeader, mouseReferences) ) {
     cerr << "Could not open output BAM file" << endl;
+    exit(1);
   }
 
 
