@@ -273,15 +273,22 @@ int disambiguate(list<BamAlignment>& hlist,list<BamAlignment>& mlist, string dis
   //watch some cat videos on youtube
   //right you must be ready by now!
   //let's go
-  else if (disambalgo == ("BWA")||disambalgo == ("bwa"))
+  else if (disambalgo == ("BWA")||disambalgo == ("bwa")||disambalgo == ("star")||disambalgo == ("STAR"))
     //with bwa the higher the score the better
     {
 
       int dv;//you'll remember this from above right?
       dv = -8192;//you should re read it then...
       //this is where bwa gets a little different
-      string bwatagname[3] = {"AS","NM","XS"};//so we have an array of names to be used later
-      int bwatagsigns[3] = {1,-1,1};//because of the scale between the different numbers we have to multiply
+      //string bwatagname[3] = {"AS","NM","XS"};//so we have an array of names to be used later
+      //int bwatagsigns[3] = {1,-1,1};//because of the scale between the different numbers we have to multiply
+      string bwatagname[2] = {"AS","NM"};//,"XS"};//so we have an array of names to be used later
+      if (disambalgo == ("star")||disambalgo == ("STAR")){
+        string bwatagname[2] = {"AS","nM"};//,"XS"};//so we have an array of names to be used later
+      }else{
+        string bwatagname[2] = {"AS","NM"};//,"XS"};//so we have an array of names to be used later
+      }
+      int bwatagsigns[2] = {1,-1};//,1};//because of the scale between the different numbers we have to multiply
       //the tag NM by -1 so the scale fits
       int size;
 
@@ -429,7 +436,7 @@ int main(int argc, char **argv) {
     // Define a value argument and add it to the command line.
     // A value arg defines a flag and a type of value that it expects,
     // such as "-n Bishop".
-    TCLAP::ValueArg<string> alignerArg("a","aligner","Aligner option {tophat(default),bwa}",false,"tophat","string"\
+    TCLAP::ValueArg<string> alignerArg("a","aligner","Aligner option {tophat(default),bwa,star}",false,"tophat","string"\
 					    );
     TCLAP::ValueArg<string> outpudirArg("o","output-dir","Output directory",true,"disambres/","string");
     TCLAP::ValueArg<string> prefixArg("s","prefix","Sample ID or name used as prefix. Do not include .bam",true,"my\
