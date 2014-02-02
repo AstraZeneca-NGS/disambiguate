@@ -6,7 +6,7 @@ It is part of the explant RNA/DNA-Seq workflow where an informatics
 approach is used to distinguish between e.g. human and mouse or rat RNA/DNA reads.
 
 For reads that have aligned to both organisms, the functionality is based on
-comparing quality scores from either Tophat, STAR of BWA. Read
+comparing quality scores from either Tophat, STAR or BWA. Read
 name is used to collect all alignments for both mates (_1 and _2) and
 compared between the alignments from the two species.
 
@@ -80,12 +80,12 @@ def disambiguate(humanlist, mouselist, disambalgo):
         else:
             # assign to mouse
             return -1
-    elif disambalgo.lower() in ('bwa','star'):
+    elif disambalgo.lower() in ('bwa', 'star'):
         dv = -2^13 # default value, low
-        bwatags = ['AS','NM']# ,'XS'] # in order of importance (compared sequentially, not as a sum as for tophat)
+        bwatags = ['AS', 'NM']# ,'XS'] # in order of importance (compared sequentially, not as a sum as for tophat)
         if disambalgo.lower() == 'star':
-            bwatags[1]='nM' # oddity of STAR
-        bwatagsigns = [1,-1]#,1] # for AS and XS higher is better. for NM lower is better, thus multiply by -1
+            bwatags[1] = 'nM' # oddity of STAR
+        bwatagsigns = [1, -1]#,1] # for AS and XS higher is better. for NM lower is better, thus multiply by -1
         AS = list()
         for x in range(0, len(bwatagsigns)):
             AS.append(array('i',(dv for i in range(0,4)))) # alignment score array, with [human_1_Score, human_2_Score, mouse_1_Score, mouse_2_Score]
