@@ -283,11 +283,11 @@ int disambiguate(list<BamAlignment>& hlist,list<BamAlignment>& mlist, string dis
       //string bwatagname[3] = {"AS","NM","XS"};//so we have an array of names to be used later
       //int bwatagsigns[3] = {1,-1,1};//because of the scale between the different numbers we have to multiply
       string bwatagname[2] = {"AS","NM"};//,"XS"};//so we have an array of names to be used later
-      if (disambalgo == ("star")||disambalgo == ("STAR")){
-        string bwatagname[2] = {"AS","nM"};//,"XS"};//so we have an array of names to be used later
-      }else{
-        string bwatagname[2] = {"AS","NM"};//,"XS"};//so we have an array of names to be used later
-      }
+      //if (disambalgo == ("star")||disambalgo == ("STAR")){
+      //  string bwatagname[2] = {"AS","nM"};//,"XS"};//so we have an array of names to be used later
+      //}else{
+      //  string bwatagname[2] = {"AS","NM"};//,"XS"};//so we have an array of names to be used later
+      //}
       int bwatagsigns[2] = {1,-1};//,1};//because of the scale between the different numbers we have to multiply
       //the tag NM by -1 so the scale fits
       int size;
