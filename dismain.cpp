@@ -160,7 +160,7 @@ int disambiguate(list<BamAlignment>& hlist,list<BamAlignment>& mlist, string dis
 {
   int result; //this is returned at the end and is used to tell where the read should be sent
   //i.e it's the result.....
-  if (disambalgo == "tophat")//this checks for the algorithm
+  if (disambalgo == "tophat" || disambalgo == "hisat2")//this checks for the algorithm
     //for tophat the lower the score the better
     {
       int dv; //this is used to fill the array with a impossibly high number
@@ -436,7 +436,7 @@ int main(int argc, char **argv) {
     // Define a value argument and add it to the command line.
     // A value arg defines a flag and a type of value that it expects,
     // such as "-n Bishop".
-    TCLAP::ValueArg<string> alignerArg("a","aligner","Aligner option {tophat(default),bwa,star}",false,"tophat","string"\
+    TCLAP::ValueArg<string> alignerArg("a","aligner","Aligner option {tophat(default),hisat2,bwa,star}",false,"tophat","string"\
 					    );
     TCLAP::ValueArg<string> outpudirArg("o","output-dir","Output directory",true,"disambres/","string");
     TCLAP::ValueArg<string> prefixArg("s","prefix","Sample ID or name used as prefix. Do not include .bam",true,"my\
