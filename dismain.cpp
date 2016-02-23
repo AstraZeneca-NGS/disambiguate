@@ -331,7 +331,11 @@ int disambiguate(list<BamAlignment>& hlist,list<BamAlignment>& mlist, string dis
 	      //creating a temp value to store the gettag results
 	      uint32_t *bwatagvaluetemp = new uint32_t(1);
 	      //we use x to get the right tagname
-	      temp.GetTag<uint32_t>(bwatagname[x],*bwatagvaluetemp);
+	      bool wasfound = temp.GetTag<uint32_t>(bwatagname[x],*bwatagvaluetemp);
+              if (!wasfound && bwatagname[x] == "AS"){ // this can happen in bwa e.g. for hg38 ALT-alignments and AS missing
+                delete bwatagvaluetemp;
+                continue;
+              }
 	      //and then get the corresponding tag sign
 	      //bwa is done sequentially over grouped so the Qscores are calculated per Tag
 	      //maths tagsign * tagvalue from gettag
@@ -367,7 +371,12 @@ int disambiguate(list<BamAlignment>& hlist,list<BamAlignment>& mlist, string dis
 	    {
 	      uint32_t *bwatagvaluetemp = new uint32_t(1);
 
-	      temp.GetTag<uint32_t>(bwatagname[x],*bwatagvaluetemp);
+              bool wasfound = temp.GetTag<uint32_t>(bwatagname[x],*bwatagvaluetemp);
+              if (!wasfound  && bwatagname[x] == "AS"){ // this can happen in bwa e.g. for hg38 ALT-alignments and AS missing
+                delete bwatagvaluetemp;
+                continue;
+              }
+
 
 	      QScore = ((bwatagsigns[x]) * (int)(*bwatagvaluetemp));
 
