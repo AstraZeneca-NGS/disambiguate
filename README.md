@@ -18,3 +18,6 @@ For usage help, run disambiguate.py as-is.
 
 To compile the C++ program, use the following syntax in the same folder where the code is:
 c++ -I /path/to/bamtools_c_api/include/ -I./ -L /path/to/bamtools_c_api/lib/ -o disambiguate dismain.cpp -lz -lbamtools
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.166017.svg)](https://doi.org/10.5281/zenodo.166017)
+
