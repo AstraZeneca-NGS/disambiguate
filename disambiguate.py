@@ -178,9 +178,9 @@ def main(args):
         humanfilenamesorted = path.join(intermdir,humanprefix+".speciesA.namesorted.bam")
         mousefilenamesorted = path.join(intermdir,mouseprefix+".speciesB.namesorted.bam")
         if not path.isfile(humanfilenamesorted):
-            pysam.sort("-n","-m","2000000000",humanfilename,humanfilenamesorted.replace(".bam",""))
+            pysam.sort("-n","-m","2000000000","-o",humanfilenamesorted,humanfilename)
         if not path.isfile(mousefilenamesorted):
-            pysam.sort("-n","-m","2000000000",mousefilename,mousefilenamesorted.replace(".bam",""))
+            pysam.sort("-n","-m","2000000000","-o",mousefilenamesorted,mousefilename)
    # read in human reads and form a dictionary
     myHumanFile = pysam.Samfile(humanfilenamesorted, "rb" )
     myMouseFile = pysam.Samfile(mousefilenamesorted, "rb" )
