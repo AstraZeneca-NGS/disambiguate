@@ -137,8 +137,59 @@ def disambiguate(humanlist, mouselist, disambalgo):
         sys.exit(2)
 
 
-#code
-def main(args):
+def main():
+    description = """
+disambiguate.py disambiguates between two organisms that have alignments
+from the same source of fastq files. An example where this might be
+useful is as part of an explant RNA/DNA-Seq workflow where an informatics
+approach is used to distinguish between human and mouse RNA/DNA reads.
+
+For reads that have aligned to both organisms, the functionality is based on
+comparing quality scores from either Tophat of BWA. Read
+name is used to collect all alignments for both mates (_1 and _2) and
+compared between human and mouse alignments.
+
+For Tophat (default, can be changed using option -a) and Hisat2, the sum of the tags XO,
+NM and NH is evaluated and the lowest sum wins the paired end reads. For equal
+scores (both mates, both species), the reads are assigned as ambiguous.
+
+The alternative algorithm (STAR, bwa) disambiguates (for aligned reads) by tags
+AS (alignment score, higher better), followed by NM (edit distance, lower 
+better).
+
+The output directory will contain four files:\n
+...disambiguatedSpeciesA.bam: Reads that could be assigned to species A
+...disambiguatedSpeciesB.bam: Reads that could be assigned to species B
+...ambiguousSpeciesA.bam: Reads aligned to species A that also aligned \n\tto B but could not be uniquely assigned to either
+...ambiguousSpeciesB.bam: Reads aligned to species B that also aligned \n\tto A but could not be uniquely assigned to either
+..._summary.txt: A summary of unique read names assigned to species A, B \n\tand ambiguous.
+
+Examples:
+disambiguate.py test/human.bam test/mouse.bam
+disambiguate.py -s mysample1 test/human.bam test/mouse.bam
+   """
+
+    parser = ArgumentParser(description=description, formatter_class=RawTextHelpFormatter)
+    parser.add_argument('A', help='Input BAM file for species A.')
+    parser.add_argument('B', help='Input BAM file for species B.')
+    parser.add_argument('-o', '--output-dir', default="disambres",
+                        help='Output directory.')
+    parser.add_argument('-i', '--intermediate-dir', default="intermfiles",
+                        help='Location to store intermediate files')
+    parser.add_argument('-d', '--no-sort', action='store_true', default=False,
+                        help='Disable BAM file sorting. Use this option if the '
+                        'files have already been name sorted.')
+    parser.add_argument('-s', '--prefix', default='',
+                        help='A prefix (e.g. sample name) to use for the output '
+                        'BAM files. If not provided, the input BAM file prefix '
+                        'will be used. Do not include .bam in the prefix.')
+    parser.add_argument('-a', '--aligner', default='tophat',
+                        choices=('tophat', 'hisat2', 'bwa', 'star'),
+                        help='The aligner used to generate these reads. Some '
+                        'aligners set different tags.')
+    args = parser.parse_args()
+
+    #code
     numhum = nummou = numamb = 0
     #starttime = time.clock()
     # parse inputs
@@ -297,54 +348,4 @@ def file_exists(fname):
     return path.exists(fname) and path.getsize(fname) > 0
 
 if __name__ == "__main__":
-   description = """
-disambiguate.py disambiguates between two organisms that have alignments
-from the same source of fastq files. An example where this might be
-useful is as part of an explant RNA/DNA-Seq workflow where an informatics
-approach is used to distinguish between human and mouse RNA/DNA reads.
-
-For reads that have aligned to both organisms, the functionality is based on
-comparing quality scores from either Tophat of BWA. Read
-name is used to collect all alignments for both mates (_1 and _2) and
-compared between human and mouse alignments.
-
-For Tophat (default, can be changed using option -a) and Hisat2, the sum of the tags XO,
-NM and NH is evaluated and the lowest sum wins the paired end reads. For equal
-scores (both mates, both species), the reads are assigned as ambiguous.
-
-The alternative algorithm (STAR, bwa) disambiguates (for aligned reads) by tags
-AS (alignment score, higher better), followed by NM (edit distance, lower 
-better).
-
-The output directory will contain four files:\n
-...disambiguatedSpeciesA.bam: Reads that could be assigned to species A
-...disambiguatedSpeciesB.bam: Reads that could be assigned to species B
-...ambiguousSpeciesA.bam: Reads aligned to species A that also aligned \n\tto B but could not be uniquely assigned to either
-...ambiguousSpeciesB.bam: Reads aligned to species B that also aligned \n\tto A but could not be uniquely assigned to either
-..._summary.txt: A summary of unique read names assigned to species A, B \n\tand ambiguous.
-
-Examples:
-disambiguate.py test/human.bam test/mouse.bam
-disambiguate.py -s mysample1 test/human.bam test/mouse.bam
-   """
-
-   parser = ArgumentParser(description=description, formatter_class=RawTextHelpFormatter)
-   parser.add_argument('A', help='Input BAM file for species A.')
-   parser.add_argument('B', help='Input BAM file for species B.')
-   parser.add_argument('-o', '--output-dir', default="disambres",
-                       help='Output directory.')
-   parser.add_argument('-i', '--intermediate-dir', default="intermfiles",
-                       help='Location to store intermediate files')
-   parser.add_argument('-d', '--no-sort', action='store_true', default=False,
-                       help='Disable BAM file sorting. Use this option if the '
-                       'files have already been name sorted.')
-   parser.add_argument('-s', '--prefix', default='',
-                       help='A prefix (e.g. sample name) to use for the output '
-                       'BAM files. If not provided, the input BAM file prefix '
-                       'will be used. Do not include .bam in the prefix.')
-   parser.add_argument('-a', '--aligner', default='tophat',
-                       choices=('tophat', 'hisat2', 'bwa', 'star'),
-                       help='The aligner used to generate these reads. Some '
-                       'aligners set different tags.')
-   args = parser.parse_args()
-   main(args)
+   main()
