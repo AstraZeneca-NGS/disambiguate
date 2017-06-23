@@ -10,8 +10,8 @@ to include the NM tag in the output when performing alignment (in fact this is a
 for the C++ version).
 
 Differences between the Python and C++ versions:
-1. The Python version can do name sorting of the reads (a necessary step) internally
-but for the C++ version the input BAM files _must_ be name sorted (internal name sorting not 
+1. The Python version can do natural name sorting of the reads (a necessary step) internally
+but for the C++ version the input BAM files _must_ be natural name sorted (internal natural name sorting not 
 supported).
 2. The flag -s (samplename prefix) must be provided as an input parameter to the C++ binary
 
