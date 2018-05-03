@@ -283,11 +283,11 @@ disambiguate.py -s mysample1 test/human.bam test/mouse.bam
         if nat_cmp(nexthumread.qname,nextmouread.qname) == 0:
             humlist.append(nexthumread)
             nexthumread = read_next_reads(myHumanFile, humlist) # read more reads with same qname (the function modifies humlist directly)
-            if nexthumread == None:
+            if not nexthumread:
                 EOFhuman = True
             moulist.append(nextmouread)
             nextmouread = read_next_reads(myMouseFile, moulist) # read more reads with same qname (the function modifies moulist directly)
-            if nextmouread == None:
+            if not nextmouread:
                 EOFmouse = True
 
         # perform comparison to check mouse, human or ambiguous
