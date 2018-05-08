@@ -22,7 +22,7 @@ To compile the C++ program, use the following syntax in the same folder where th
 c++ -I /path/to/bamtools_c_api/include/ -I./ -L /path/to/bamtools_c_api/lib/ -o disambiguate dismain.cpp -lz -lbamtools
 ```
 
-Note, the disambiguate C++ source _must_ be complied against bamtools version [2.4.0](https://github.com/pezmaster31/bamtools/releases).  The current bamtools release is not supported.
+Note, the disambiguate C++ source _must_ be compiled against bamtools version [2.4.0](https://github.com/pezmaster31/bamtools/releases).  The current bamtools release is not supported.
 
 A pre-compiled binary is also available in bioconda http://bioconda.github.io/recipes/ngs-disambiguate/README.html
 
