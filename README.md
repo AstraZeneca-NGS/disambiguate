@@ -31,5 +31,5 @@ A pre-compiled binary is also available in bioconda http://bioconda.github.io/re
 Citing
 ------
 Ahdesmäki MJ, Gray SR, Johnson JH and Lai Z. Disambiguate: An open-source application for disambiguating two species in next generation sequencing data from grafted samples. F1000Research 2016, 5:2741,
-[DOI:10.12688/f1000research.10082.1](http://dx.doi.org/10.12688/f1000research.10082.1)
+[DOI:10.12688/f1000research.10082.1](https://doi.org/10.12688/f1000research.10082.1)
 
